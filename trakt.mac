@@ -1,0 +1,88 @@
+ROUTINE trakt
+saveratings ;
+    set API=##class(Trakt2Notion.TraktAPI).%New()
+    Set ratings=API.GetSingleUserRecord("ratings")
+    do API.SaveToDB(ratings, "Rating")
+    Quit
+
+getuserlist(listname) ;
+    
+    set API=##class(Trakt2Notion.TraktAPI).%New()
+   
+    Set list=API.GetSingleUserRecord("lists/"_listname_"/items")
+
+    Quit list
+    
+getalluserlists ;
+
+    Set API=##class(Trakt2Notion.TraktAPI).%New()
+
+    Set watchlist=API.GetSingleUserRecord("lists")
+    Set iter = watchlist.%GetIterator()
+    
+    While iter.%GetNext(.key, .value, .type ) {
+        
+        w value.name_" - "_value.ids.trakt,!
+    }
+    Quit
+  
+savelisttodb(obj) ;
+    
+    set API=##class(Trakt2Notion.TraktAPI).%New()
+
+    Set ratings=API.GetSingleUserListRecord(obj.ID)   
+    do API.SaveToDB(ratings,"list",obj)
+
+
+
+exportfinishedtocsv(listID)
+
+    set API=##class(Trakt2Notion.TraktAPI).%New()
+   
+    Set list=API.GetSingleUserRecord("lists/***/items")
+
+AUTH 
+
+    set trakt=##class(Trakt2Notion.TraktAPI).%New()
+    do trakt.AuthoriseApplication()
+
+
+ADDALLLISTS
+   
+    // DNF
+    set API=##class(Trakt2Notion.TraktAPI).%New()
+    Set obj={"Name":"***","ID":"***"}
+    Set ratings=API.GetSingleUserListRecord(obj.ID)   
+    do API.SaveToDB(ratings,"list",obj)
+    Kill obj
+    // Finished
+    set API=##class(Trakt2Notion.TraktAPI).%New()
+    Set obj={"Name":"***","ID":"***"}
+    Set ratings=API.GetSingleUserListRecord(obj.ID)   
+    do API.SaveToDB(ratings,"list",obj)
+    Kill obj
+    // Watching
+    set API=##class(Trakt2Notion.TraktAPI).%New()
+    Set obj={"Name":"***","ID":"***"}
+    Set ratings=API.GetSingleUserListRecord(obj.ID)   
+    do API.SaveToDB(ratings,"list",obj)
+    Kill obj
+
+    // Watchlist TV
+    set API=##class(Trakt2Notion.TraktAPI).%New()
+    Set obj={"Name":"****","ID":"***"}
+    Set ratings=API.GetSingleUserListRecord(obj.ID)   
+    do API.SaveToDB(ratings,"list",obj)
+    Kill obj
+
+    // Watching Films
+    set API=##class(Trakt2Notion.TraktAPI).%New()
+    Set obj={"Name":"****","ID":"***"}
+    Set ratings=API.GetSingleUserListRecord(obj.ID)   
+    do API.SaveToDB(ratings,"list",obj)
+    Kill obj
+
+BG 
+
+    HANG 60
+    Do ADDALLLISTS

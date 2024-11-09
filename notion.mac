@@ -1,0 +1,60 @@
+ROUTINE notion
+ADDPENDING
+    
+    Set API=##class(Trakt2Notion.NotionAPI).%New()
+
+    Set watchlist=API.QueryDatabase("***", {})
+    Set iter = watchlist.results.%GetIterator()
+    Set updateObj={"movies": []}
+    Set NUMOFRECORDS=watchlist.results.size()
+    If NUMOFRECORDS=0 
+    {
+        W "No RECORDS",!
+    }
+    Else 
+    {
+    Set RECORDS=""
+    While iter.%GetNext(.key, .value, .type ) 
+    {
+        
+        
+        set requests = ##class(%SYS.Python).Import("requests")
+        set builtins = ##class(%SYS.Python).Import("builtins")
+        set soup = ##class(%SYS.Python).Import("bs4")
+        set r = requests.get(value.properties.URL.url)
+        set data = soup.BeautifulSoup(r.content, "html.parser")
+        set a={"class":"micro-button"}
+        set test=data.find("a", a...).get("href")
+        Set IMDB=$P(test,"/",5)
+        Set RECORDS(value.id)=""
+        w IMDB,!
+        Set obj={"Name": "***", "ID":"***"}
+        Do updateObj.movies.%Push({"ids": {"imdb": (IMDB)}})
+
+
+    }
+    
+    zw RECORDS
+   
+    Set trakt=##class(Trakt2Notion.TraktAPI).%New()
+    Set res=trakt.UpdateUserList("***",updateObj)
+    
+    If (res.added.movies+res.existing.movies=NUMOFRECORDS) {
+        Set RECORDID=""
+        For 
+        {   
+            Set API=##class(Trakt2Notion.NotionAPI).%New()
+            Set RECORDID=$O(RECORDS(RECORDID))
+            If RECORDID="" Quit
+            W RECORDID
+            Set test=API.UpdateSinglePage(RECORDID, {"archived": true})
+            zw test
+            
+        }
+    }
+    }
+  
+
+BG
+    Hang 60
+    Do ADDPENDING
